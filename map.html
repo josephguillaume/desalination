@@ -226,6 +226,17 @@
           map.addLayer(active_layer);
         })
       );
+
+      var exit = L.control({ position: "topright" });
+      exit.onAdd = function(map) {
+        var div = L.DomUtil.create("div", "info legend");
+        div.innerHTML = `
+      <a href="https://josephguillaume.github.io/desalination/map.html" target="_blank">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==" />
+      </a>`;
+        return div;
+      };
+      exit.addTo(map);
     </script>
   </body>
 </html>
