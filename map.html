@@ -115,7 +115,10 @@
     <div id="map"></div>
 
     <script>
-      var map = L.map("map").fitBounds([[-46.8, -122.4], [60.3, 153]]);
+      var map = L.map("map", { zoomSnap: 0.2 }).fitBounds([
+        [-46.8, -122.4],
+        [60.3, 153]
+      ]);
 
       var CartoDB_Positron = L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
