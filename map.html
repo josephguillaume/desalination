@@ -177,7 +177,8 @@
           weight: 0,
           opacity: 0,
           fillOpacity: 0.7
-        })
+        }),
+        smoothFactor: 0
       }).bindTooltip(
         layer => "" + layer.feature.properties.cost + " €/m<sup>3</sup>"
       );
@@ -201,7 +202,8 @@
           weight: 0,
           opacity: 0,
           fillOpacity: 0.7
-        })
+        }),
+        smoothFactor: 0
       }).bindTooltip(layer => "" + layer.feature.properties.cost + " €/kWh");
       var lcoe_legend = lcoe_scale.createLegend();
 
