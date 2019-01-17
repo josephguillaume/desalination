@@ -1,0 +1,231 @@
+<html>
+  <!DOCTYPE html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+      integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+      integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+      crossorigin=""
+    ></script>
+
+    <script src="lcow.js"></script>
+    <script src="lcoe.js"></script>
+
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+      }
+
+      #map {
+        height: calc(100% - 2em);
+      }
+
+      .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+      }
+      .info h4 {
+        margin: 0 0 5px;
+        color: #777;
+      }
+      .legend {
+        line-height: 18px;
+        color: #555;
+      }
+      .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.7;
+      }
+
+      .tabBar {
+        height: 24px;
+        display: flex;
+        justify-content: space-evenly;
+        align-content: stretch;
+      }
+      .tabItem {
+        flex-basis: auto;
+        flex-grow: 1;
+        padding: 2px 0px 2px 0px;
+        float: left;
+        margin-left: -1px;
+        border: #aaa solid 1px;
+        border-right: none;
+        cursor: pointer;
+        text-align: center;
+        font-size: 15px;
+        font-weight: normal;
+        color: #ccc;
+      }
+      .tabItem:first-child {
+        border-radius: 7px 0px 0 7px;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
+      }
+      .tabItem:last-child {
+        border-radius: 0px 7px 7px 0px;
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px;
+        border-right: 1px solid #aaa;
+      }
+      .tabItem:hover {
+        color: #00007f;
+      }
+      .tabItem.selected {
+        color: maroon;
+        background: #eee;
+        box-shadow: inset 1px 1px 7px -2px #555;
+        color: white !important;
+        font-weight: 400;
+        border: 1px solid #e34b4b !important;
+        background: #00007f !important;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="tabBar" id="tabBar">
+      <div id="desal_demand" class="tabItem">Desalination demand</div>
+      <div id="lcow" class="tabItem selected">Cost of water</div>
+      <div id="capacity" class="tabItem">PV-Wind capacity for desalination</div>
+      <div id="lcoe" class="tabItem">Cost of electricity</div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+      var map = L.map("map").fitBounds([[-46.8, -122.4], [60.3, 153]]);
+
+      var CartoDB_Positron = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution:
+            '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: "abcd",
+          maxZoom: 19
+        }
+      ).addTo(map);
+
+      class ColorScale {
+        constructor(name, colors) {
+          this.name = name;
+          this.colors = colors;
+        }
+
+        getColor(v) {
+          // TODO: constructor should check colors are in ascending order
+          return this.colors.filter(x => x.hi >= v)[0].col;
+        }
+
+        createLegend() {
+          var legend = L.control({ position: "bottomright" });
+          var name = this.name;
+          var colors = this.colors.slice(0);
+          // highest values on top
+          colors.reverse();
+
+          legend.onAdd = function(map) {
+            var div = L.DomUtil.create("div", "info legend");
+            div.innerHTML = `<h4>${name}</h4>`;
+            colors.forEach(
+              x =>
+                (div.innerHTML += `<i style="background:${x.col}"></i> ${
+                  x.lo
+                } &ndash; ${x.hi} <br/>`)
+            );
+            return div;
+          };
+          return legend;
+        }
+      }
+
+      lcow_scale = new ColorScale(
+        "Levelised cost of water <br/> in 2030 (€/m<sup>3</sup>)",
+        [
+          { lo: 0, hi: 0.97, col: "#00007F" },
+          { lo: 0.97, hi: 1.23, col: "#007FFF" },
+          { lo: 1.23, hi: 1.56, col: "#7FFF7F" },
+          { lo: 1.56, hi: 1.97, col: "#FF7F00" },
+          { lo: 1.97, hi: 4.65, col: "#7F0000" }
+        ]
+      );
+
+      var lcow_layer = L.geoJson(lcow, {
+        style: feature => ({
+          fillColor: lcow_scale.getColor(feature.properties.cost),
+          weight: 0,
+          opacity: 0,
+          fillOpacity: 0.7
+        })
+      }).bindTooltip(
+        layer => "" + layer.feature.properties.cost + " €/m<sup>3</sup>"
+      );
+
+      var lcow_legend = lcow_scale.createLegend();
+
+      lcoe_scale = new ColorScale(
+        "Levelised cost of electricity <br/> in 2030 (€/kWh)",
+        [
+          { lo: 0.05, hi: 0.08, col: "#00007F" },
+          { lo: 0.08, hi: 0.09, col: "#007FFF" },
+          { lo: 0.09, hi: 0.1, col: "#7FFF7F" },
+          { lo: 0.1, hi: 0.11, col: "#FF7F00" },
+          { lo: 0.11, hi: 0.16, col: "#7F0000" }
+        ]
+      );
+
+      var lcoe_layer = L.geoJson(lcoe, {
+        style: feature => ({
+          fillColor: lcoe_scale.getColor(feature.properties.cost),
+          weight: 0,
+          opacity: 0,
+          fillOpacity: 0.7
+        })
+      }).bindTooltip(layer => "" + layer.feature.properties.cost + " €/kWh");
+      var lcoe_legend = lcoe_scale.createLegend();
+
+      var active_layer = lcow_layer.addTo(map);
+      var active_legend = lcow_legend.addTo(map);
+
+      var layers = {
+        lcow: { legend: lcow_legend, layer: lcow_layer },
+        lcoe: { legend: lcoe_legend, layer: lcoe_layer }
+      };
+      Array.from(document.getElementsByClassName("tabitem")).forEach(x =>
+        x.addEventListener("click", function() {
+          if (typeof layers[this.id] === "undefined") return false;
+          document
+            .getElementsByClassName("tabitem selected")[0]
+            .classList.remove("selected");
+          this.classList.add("selected");
+          map.removeLayer(active_layer);
+          map.removeControl(active_legend);
+          active_legend = layers[this.id].legend;
+          active_layer = layers[this.id].layer;
+          map.addControl(active_legend);
+          map.addLayer(active_layer);
+        })
+      );
+    </script>
+  </body>
+</html>
