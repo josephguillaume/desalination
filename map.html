@@ -215,11 +215,12 @@
         lcow: { legend: lcow_legend, layer: lcow_layer },
         lcoe: { legend: lcoe_legend, layer: lcoe_layer }
       };
-      Array.from(document.getElementsByClassName("tabitem")).forEach(x =>
+      Array.from(document.getElementsByClassName("tabItem")).forEach(x =>
         x.addEventListener("click", function() {
+          console.log("click")
           if (typeof layers[this.id] === "undefined") return false;
           document
-            .getElementsByClassName("tabitem selected")[0]
+            .getElementsByClassName("tabItem selected")[0]
             .classList.remove("selected");
           this.classList.add("selected");
           map.removeLayer(active_layer);
