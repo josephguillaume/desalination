@@ -17,6 +17,7 @@
 
     <script src="lcow.js"></script>
     <script src="lcoe.js"></script>
+    <script src="pump.js"></script>
 
     <style>
       body {
@@ -107,6 +108,7 @@
     <div class="tabBar" id="tabBar">
       <div id="desal_demand" class="tabItem">Desalination demand</div>
       <div id="lcow" class="tabItem selected">Cost of water</div>
+      <div id="pump" class="tabItem">Pumping cost</div>
       <div id="capacity" class="tabItem">PV-Wind capacity for desalination</div>
       <div id="lcoe" class="tabItem">Cost of electricity</div>
     </div>
@@ -208,16 +210,38 @@
       }).bindTooltip(layer => "" + layer.feature.properties.cost + " €/kWh");
       var lcoe_legend = lcoe_scale.createLegend();
 
+      pump_scale = new ColorScale(
+        "Pumping cost as percentage of total water cost <br/> in 2030 (%)",
+        [
+          { lo: 0, hi: 8, col: "#00007F" },
+          { lo: 8, hi: 13, col: "#007FFF" },
+          { lo: 13, hi: 19, col: "#7FFF7F" },
+          { lo: 19, hi: 27, col: "#FF7F00" },
+          { lo: 27, hi: 44, col: "#7F0000" }
+        ]
+      );
+
+      var pump_layer = L.geoJson(pump, {
+        style: feature => ({
+          fillColor: pump_scale.getColor(feature.properties.ratio),
+          weight: 0,
+          opacity: 0,
+          fillOpacity: 0.7
+        }),
+        smoothFactor: 0
+      }).bindTooltip(layer => "" + layer.feature.properties.ratio + " %");
+      var pump_legend = pump_scale.createLegend();
+
       var active_layer = lcow_layer.addTo(map);
       var active_legend = lcow_legend.addTo(map);
 
       var layers = {
         lcow: { legend: lcow_legend, layer: lcow_layer },
-        lcoe: { legend: lcoe_legend, layer: lcoe_layer }
+        lcoe: { legend: lcoe_legend, layer: lcoe_layer },
+        pump: { legend: pump_legend, layer: pump_layer }
       };
       Array.from(document.getElementsByClassName("tabItem")).forEach(x =>
         x.addEventListener("click", function() {
-          console.log("click")
           if (typeof layers[this.id] === "undefined") return false;
           document
             .getElementsByClassName("tabItem selected")[0]
