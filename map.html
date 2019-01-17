@@ -25,12 +25,15 @@
       }
       html,
       body {
+        display: flex;
+        flex-direction: column;
         height: 100%;
         width: 100%;
       }
 
       #map {
-        height: calc(100% - 2em);
+        flex-shrink: 1;
+        height: 100%;
       }
 
       .info {
@@ -58,13 +61,11 @@
       }
 
       .tabBar {
-        height: 24px;
         display: flex;
         justify-content: space-evenly;
         align-content: stretch;
       }
       .tabItem {
-        flex-basis: auto;
         flex-grow: 1;
         padding: 2px 0px 2px 0px;
         float: left;
