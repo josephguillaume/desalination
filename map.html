@@ -17,6 +17,7 @@
 
     <script src="demand.js"></script>
     <script src="lcow.js"></script>
+    <script src="capacity.js"></script>
     <script src="lcoe.js"></script>
     <script src="pump.js"></script>
 
@@ -249,12 +250,35 @@
       );
       var demand_legend = demand_scale.createLegend();
 
+      capacity_scale = new ColorScale(
+        "Hybrid PV and wind<br/> electricity generation <br/>capacity for 2030 (GW)",
+        [
+          { lo: 0, hi: 0.01, col: "#00007F" },
+          { lo: 0.01, hi: 0.06, col: "#007FFF" },
+          { lo: 0.06, hi: 0.28, col: "#7FFF7F" },
+          { lo: 0.28, hi: 1.37, col: "#FF7F00" },
+          { lo: 1.37, hi: 85.21, col: "#7F0000" }
+        ]
+      );
+
+      var capacity_layer = L.geoJson(capacity, {
+        style: feature => ({
+          fillColor: capacity_scale.getColor(feature.properties.capacity),
+          weight: 0,
+          opacity: 0,
+          fillOpacity: 0.7
+        }),
+        smoothFactor: 0
+      }).bindTooltip(layer => "" + layer.feature.properties.capacity + " GW");
+      var capacity_legend = capacity_scale.createLegend();
+
       var active_layer = demand_layer.addTo(map);
       var active_legend = demand_legend.addTo(map);
 
       var layers = {
         demand: { legend: demand_legend, layer: demand_layer },
         lcow: { legend: lcow_legend, layer: lcow_layer },
+        capacity: { legend: capacity_legend, layer: capacity_layer },
         lcoe: { legend: lcoe_legend, layer: lcoe_layer },
         pump: { legend: pump_legend, layer: pump_layer }
       };
