@@ -15,6 +15,7 @@
       crossorigin=""
     ></script>
 
+    <script src="demand2.js"></script>
     <script src="lcow2.js"></script>
     <script src="lcoe2.js"></script>
     <script src="pump2.js"></script>
@@ -97,8 +98,8 @@
 
   <body>
     <div class="tabBar" id="tabBar">
-      <div id="desal_demand" class="tabItem">Desalination demand</div>
-      <div id="lcow" class="tabItem selected">Cost of water</div>
+      <div id="demand" class="tabItem selected">Desalination demand</div>
+      <div id="lcow" class="tabItem">Cost of water</div>
       <div id="pump" class="tabItem">Pumping cost</div>
       <div id="capacity" class="tabItem">PV-Wind capacity for desalination</div>
       <div id="lcoe" class="tabItem">Cost of electricity</div>
@@ -129,7 +130,7 @@
 
         // colors are extracted by index
         getColor(v) {
-          return this.colors[v-1].col
+          return this.colors[v - 1].col;
         }
 
         createLegend() {
@@ -221,10 +222,33 @@
       });
       var pump_legend = pump_scale.createLegend();
 
-      var active_layer = lcow_layer.addTo(map);
-      var active_legend = lcow_legend.addTo(map);
+      demand_scale = new ColorScale(
+        "Desalination demand<br/>scenario for 2030 <br/>(1000 m<sup>3</sup>/day)",
+        [
+          { lo: 0, hi: 0.71, col: "#00007F" },
+          { lo: 0.71, hi: 10.45, col: "#007FFF" },
+          { lo: 10.45, hi: 84.67, col: "#7FFF7F" },
+          { lo: 84.67, hi: 548.1, col: "#FF7F00" },
+          { lo: 548.1, hi: 52863.05, col: "#7F0000" }
+        ]
+      );
+
+      var demand_layer = L.geoJson(demand, {
+        style: feature => ({
+          fillColor: demand_scale.getColor(feature.properties.layer),
+          weight: 0,
+          opacity: 0,
+          fillOpacity: 0.7
+        }),
+        smoothFactor: 0
+      });
+      var demand_legend = demand_scale.createLegend();
+
+      var active_layer = demand_layer.addTo(map);
+      var active_legend = demand_legend.addTo(map);
 
       var layers = {
+        demand: { legend: demand_legend, layer: demand_layer },
         lcow: { legend: lcow_legend, layer: lcow_layer },
         lcoe: { legend: lcoe_legend, layer: lcoe_layer },
         pump: { legend: pump_legend, layer: pump_layer }
